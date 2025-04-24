@@ -199,7 +199,7 @@ const mascaraContrasena = (contrasena) => {
                             placeholder="Nueva contraseña" />
 
                         <button @click="cambiarPass"
-                            class="bg-yellow-600 cursor-pointer text-gray-900 font-semibold px-6 py-2 rounded-md hover:bg-yellow-500 transition duration-200 focus:outline-none focus:ring-600 focus:ring-opacity-50">
+                            class="bg-yellow-600 cursor-pointer text-gray-900 font-semibold px-6 py-2 rounded-md hover:bg-yellow-500 transition duration-200 ">
                             Guardar
                         </button>
                     </div>
