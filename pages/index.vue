@@ -1,26 +1,17 @@
 <script setup>
 
-
+import { CRUD } from '@/composables/crud'
 
 const {
     user,
-    email,
     userName,
-    userPass,
-    password,
-    errorMsg,
     getUserName,
-    getPassword,
-    login,
-    signup,
-    logout
 } = useAuth()
 
 const {
     instruments,
     instrumentName,
     instrumentEmoji,
-    instrumentId,
     añadiendo,
     refreshInstruments,
     addInstrument,
@@ -28,18 +19,11 @@ const {
     deleteInstrument,
     toggleFavorite,
     rellenarInstrument,
-    getFavoritosLocalStorage,
+    
 } = CRUD()
-
-const router = useRouter()
 
 onMounted(async () => {
     refreshInstruments()
-    const favoritosLocales = getFavoritosLocalStorage()
-    instruments.value.forEach(instrument => {
-        const encontrado = favoritosLocales.find(fav => fav.id === instrument.id)
-        instrument.is_favorite = !!encontrado
-    })
 
     if (user.value) {
         await getUserName()

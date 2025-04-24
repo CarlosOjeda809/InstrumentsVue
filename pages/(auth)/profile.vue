@@ -1,4 +1,10 @@
     <script setup>
+
+
+
+
+    const client = useSupabaseClient();
+
     const {
         user,
         userName,
@@ -16,11 +22,22 @@
         refreshInstruments,
     } = CRUD()
 
+    onMounted(async () => {
+
+        if (user.value) {
+            await getUserName()
+            await getPassword()
+            refreshInstruments()
+            await fetchFavorites();
+        }
+    })
+
     const favoritos = ref([])
     const mostrarCambioPass = ref(false)
     const nuevaPass = ref('')
     const mostrarCambioNombre = ref(false)
     const nuevoNombre = ref('')
+    const favoritosTabla = ref([])
 
     const mostrarInputCambio = () => {
         mostrarCambioPass.value = !mostrarCambioPass.value
@@ -52,20 +69,49 @@
         }
     }
 
-    onMounted(async () => {
+    const removeFavorite = async (instrumentId) => {
+        const { error } = await client
+            .from('favorites')
+            .delete()
+            .eq('users_id', user.value.id)
+            .eq('instrumentos_id', instrumentId);
 
-        if (user.value) {
-            await getUserName()
-            await getPassword()
-            refreshInstruments()
-            favoritos.value = getFavoritosLocalStorage()
+        if (error) {
+            console.log(error)
+            return
         }
-    })
+
+        await fetchFavorites();
+    };
+
+
+    const fetchFavorites = async () => {
+        const { data, error } = await client
+            .from('favorites')
+            .select(`intrumento: instrumentos_id (*)`)
+            .eq('users_id', user.value.id);
+        if (error) {
+            console.log(error)
+            ret
+        }
+        console.log(data)
+
+        favoritosTabla.value = data
+
+
+    }
 
     const cerrarSesion = async () => {
         await logout()
     }
-    </script>
+
+
+
+
+
+
+
+</script>
 
 <template>
 
@@ -141,13 +187,17 @@
         <!-- PARTE DE ABAJO -->
         <div class="flex-1 h-full">
             <h1 class="font-bold text-xl text-center">INSTRUMENTOS FAVORITOS</h1>
-            <ul v-if="favoritos.length > 0" class="flex-grow flex flex-col items-center overflow-y-auto capitalize">
-                <li v-for="instrument in favoritos" :key="instrument.id"
-                    class="shadow-sm bg-gray-100 p-2 mt-5 flex items-center justify-center w-full max-w-[400px]">
-                    {{ instrument.name }} {{ instrument.emoji }}
+            <ul v-if="favoritosTabla.length > 0"
+                class="flex-grow flex flex-col items-center overflow-y-auto capitalize">
+                <li v-for="favorito in favoritosTabla" :key="favorito.intrumento.id"
+                    class="shadow-sm bg-gray-100 p-2 mt-5 flex items-center justify-between w-full max-w-[400px]">
+                    <span>{{ favorito.intrumento.name }} {{ favorito.intrumento.emoji }}</span>
+                    <Icon name="material-symbols:delete" class="text-red-500 hover:text-red-700 text-xl cursor-pointer"
+                        @click="() => removeFavorite(favorito.intrumento.id)" />
                 </li>
             </ul>
             <p v-else class="text-center text-gray-500">No tienes favoritos aún.</p>
+
         </div>
 
     </div>

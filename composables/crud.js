@@ -1,124 +1,139 @@
 export function CRUD() {
-  
-  // IMPORTACIONES
 
-  const client = useSupabaseClient()
-  const user = useSupabaseUser()
+    // IMPORTACIONES
 
-  // VARIABLES REACTIVAS
+    const client = useSupabaseClient()
+    const user = useSupabaseUser()
 
-  const instruments = ref([])
-  const instrumentName = ref('')
-  const instrumentEmoji = ref('')
-  const instrumentId = ref(null)
-  const añadiendo = ref(false)
+    // VARIABLES REACTIVAS
 
-  // CRUD INSTRUMENTOS
+    const instruments = ref([])
+    const instrumentName = ref('')
+    const instrumentEmoji = ref('')
+    const instrumentId = ref(null)
+    const añadiendo = ref(false)
 
-  const refreshInstruments = async () => {
-      const { data } = await client.from('instruments').select()
-      instruments.value = data
-      
-      updateFavoriteStatus()
-  }
+    // CRUD INSTRUMENTOS
 
-  const addInstrument = async () => {
-      if (!user.value) return
 
-      const { data } = await client.from('instruments').insert([{
-          name: instrumentName.value,
-          emoji: instrumentEmoji.value,
-          user_id: user.value.id,
-      }]).select()
+    const refreshInstruments = async () => {
+        if (!user.value) return;
 
-      if (data) {
-          instruments.value.unshift(data[0])
-          instrumentName.value = ''
-          instrumentEmoji.value = ''
-      }
-  }
+        const { data: instrumentsData, error: instrumentsError } = await client
+            .from('instruments')
+            .select()
+            .eq('user_id', user.value.id);
 
-  const updateInstrument = async () => {
-      await client.from('instruments').update({
-          name: instrumentName.value,
-          emoji: instrumentEmoji.value,
-      }).eq('id', instrumentId.value)
+        if (instrumentsError) {
+            console.log(instrumentsError);
+            return;
+        }
 
-      const instrument = instruments.value.find((i) => i.id === instrumentId.value)
-      if (instrument) {
-          instrument.name = instrumentName.value
-          instrument.emoji = instrumentEmoji.value
-      }
+        const { data: favoritesData, error: favoritesError } = await client
+            .from('favorites')
+            .select()
+            .eq('users_id', user.value.id);
 
-      instrumentName.value = ''
-      instrumentEmoji.value = ''
-      instrumentId.value = null
-      añadiendo.value = false
-  }
+        if (favoritesError) {
+            console.log(favoritesError);
+            return;
+        }
 
-  const deleteInstrument = async (id) => {
-      await client.from('instruments').delete().eq('id', id)
-      await refreshInstruments()
-  }
+        instruments.value = instrumentsData.map(instrument => {
+            const isFavorite = favoritesData?.some(fav => fav.instrumentos_id === instrument.id) || false;
+            return { ...instrument, is_favorite: isFavorite };
+        });
+    };
 
-  const rellenarInstrument = (instrument) => {
-      instrumentName.value = instrument.name
-      instrumentEmoji.value = instrument.emoji
-      instrumentId.value = instrument.id
-      añadiendo.value = true
-  }
 
-  // FUNCIONES PARA FAVORITOS
 
-  const toggleFavorite = async (instrument) => {
-      instrument.is_favorite = !instrument.is_favorite
+    const addInstrument = async () => {
+        if (!user.value) return
 
-     
+        const { data } = await client.from('instruments').insert([{
+            name: instrumentName.value,
+            emoji: instrumentEmoji.value,
+            user_id: user.value.id,
+        }]).select()
 
-      updateLocalFavorites(instrument)
-  }
+        if (data) {
+            instruments.value.unshift(data[0])
+            instrumentName.value = ''
+            instrumentEmoji.value = ''
+        }
+    }
 
-  const updateFavoriteStatus = () => {
-      const favoritos = getFavoritosLocalStorage()
+    const updateInstrument = async () => {
+        await client.from('instruments').update({
+            name: instrumentName.value,
+            emoji: instrumentEmoji.value,
+        }).eq('id', instrumentId.value)
 
-      instruments.value.forEach(instrument => {
-          const isFavorite = favoritos.some(fav => fav.id === instrument.id)
-          instrument.is_favorite = isFavorite
-      })
-  }
+        const instrument = instruments.value.find((i) => i.id === instrumentId.value)
+        if (instrument) {
+            instrument.name = instrumentName.value
+            instrument.emoji = instrumentEmoji.value
+        }
 
-  function updateLocalFavorites(instrument) {
-      const favoritos = JSON.parse(localStorage.getItem('favoritos')) || []
-      const existe = favoritos.find(fav => fav.id === instrument.id)
+        instrumentName.value = ''
+        instrumentEmoji.value = ''
+        instrumentId.value = null
+        añadiendo.value = false
+    }
 
-      if (instrument.is_favorite && !existe) {
-          favoritos.push(instrument)
-      } else if (!instrument.is_favorite && existe) {
-          const nuevosFavoritos = favoritos.filter(fav => fav.id !== instrument.id)
-          localStorage.setItem('favoritos', JSON.stringify(nuevosFavoritos))
-          return
-      }
+    const deleteInstrument = async (id) => {
+        await client.from('instruments').delete().eq('id', id)
+        await refreshInstruments()
+    }
 
-      localStorage.setItem('favoritos', JSON.stringify(favoritos))
-  }
+    const rellenarInstrument = (instrument) => {
+        instrumentName.value = instrument.name
+        instrumentEmoji.value = instrument.emoji
+        instrumentId.value = instrument.id
+        añadiendo.value = true
+    }
 
-  const getFavoritosLocalStorage = () => {
-      return JSON.parse(localStorage.getItem('favoritos')) || []
-  }
+    // FUNCIONES PARA FAVORITOS
 
-  return {
-      instruments,
-      instrumentName,
-      instrumentEmoji,
-      instrumentId,
-      añadiendo,
-      refreshInstruments,
-      addInstrument,
-      updateInstrument,
-      deleteInstrument,
-      toggleFavorite,
-      rellenarInstrument,
-      getFavoritosLocalStorage,
-      updateLocalFavorites,
-  }
+
+    const toggleFavorite = async (instrument) => {
+        if (!user.value) return;
+
+        const favoritoSi = instrument.is_favorite;
+
+        if (favoritoSi) {
+            await client
+                .from('favorites')
+                .delete()
+                .eq('instrumentos_id', instrument.id)
+                .eq('users_id', user.value.id);
+            instrument.is_favorite = false;
+        } else {
+            await client.from('favorites').insert({
+                instrumentos_id: instrument.id,
+                users_id: user.value.id,
+            });
+            instrument.is_favorite = true;
+        }
+
+        await refreshInstruments();
+    };
+
+
+
+
+    return {
+        instruments,
+        instrumentName,
+        instrumentEmoji,
+        instrumentId,
+        añadiendo,
+        refreshInstruments,
+        addInstrument,
+        updateInstrument,
+        deleteInstrument,
+        toggleFavorite,
+        rellenarInstrument,
+
+    }
 }

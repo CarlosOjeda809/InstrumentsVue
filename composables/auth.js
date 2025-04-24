@@ -12,7 +12,7 @@ export function useAuth() {
     if (user.value) {
       const { data, error } = await client
         .from('users')
-        .select('Nombre')
+        .select('Nombre') 
         .eq('id', user.value.id)
         .single()
 
@@ -53,7 +53,6 @@ export function useAuth() {
       .eq('id', user.value.id)
 
     if (updateDbError) {
-      errorMsg.value = 'Error al actualizar la contraseña en la base de datos'
       console.error(updateDbError)
       return
     }
@@ -65,21 +64,18 @@ export function useAuth() {
 
     if (authError) {
 
-      errorMsg.value = 'Error al actualizar la contraseña en Supabase Auth. La contraseña de tu tabla local podría haberse actualizado, pero la de inicio de sesión no.'
       console.error(authError)
       return
     }
 
-
     userPass.value = newPassword;
-    errorMsg.value = '¡Contraseña actualizada con éxito!';
+    errorMsg.value = 'Contraseña actualizada';
   }
 
 
   const updateUserName = async (newUserName) => {
     if (!user.value) return;
     if (!newUserName || newUserName.trim() === '') {
-      errorMsg.value = 'El nombre no puede estar vacío';
       return;
     }
 
@@ -127,8 +123,7 @@ export function useAuth() {
       userName.value = '';
       userPass.value = '';
       errorMsg.value = '';
-
-      localStorage.removeItem('favoritos');
+      
 
       navigateTo('/login');
     }
