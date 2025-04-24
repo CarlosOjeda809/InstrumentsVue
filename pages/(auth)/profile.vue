@@ -82,7 +82,7 @@ const cambiarPass = async () => {
     passwordActual.value = ''
     nuevaPass.value = ''
     mostrarCambioPass.value = false
-    
+
 }
 
 const removeFavorite = async (instrumentId) => {
@@ -167,8 +167,8 @@ const mascaraContrasena = (contrasena) => {
                         </div>
                     </div>
                     <div>
-                        <div class="flex items-center justify-center md:justify-start space-x-3">
-                            <label class="font-semibold text-gray-300">Correo electrónico:</label>
+                        <div class="flex items-center md:items-start flex-col space-x-3">
+                            <label class=" font-semibold text-gray-300 ">Correo electrónico:</label>
                             <p class="text-lg font-medium text-white">{{ user?.email }}</p>
                         </div>
                     </div>
