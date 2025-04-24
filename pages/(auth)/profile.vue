@@ -1,205 +1,204 @@
-    <script setup>
+<script setup>
+const client = useSupabaseClient()
 
+const {
+    user,
+    userName,
+    userPass,
+    errorMsg,
+    getUserName,
+    getPassword,
+    logout,
+    updatePassword,
+    updateUserName,
+} = useAuth()
 
+const {
+    getFavoritosLocalStorage,
+    refreshInstruments,
+} = CRUD()
 
+onMounted(async () => {
+    if (user.value) {
+        await getUserName()
+        await getPassword()
+        refreshInstruments()
+        await fetchFavorites()
+    }
+})
 
-    const client = useSupabaseClient();
+const favoritos = ref([])
+const mostrarCambioPass = ref(false)
+const nuevaPass = ref('')
+const mostrarCambioNombre = ref(false)
+const nuevoNombre = ref('')
+const favoritosTabla = ref([])
 
-    const {
-        user,
-        userName,
-        userPass,
-        errorMsg,
-        getUserName,
-        getPassword,
-        logout,
-        updatePassword,
-        updateUserName,
-    } = useAuth()
+const mostrarInputCambio = () => {
+    mostrarCambioPass.value = !mostrarCambioPass.value
 
-    const {
-        getFavoritosLocalStorage,
-        refreshInstruments,
-    } = CRUD()
+    if (mostrarCambioPass.value) mostrarCambioNombre.value = false
+}
 
-    onMounted(async () => {
+const mostrarInputNombre = () => {
+    mostrarCambioNombre.value = !mostrarCambioNombre.value
 
-        if (user.value) {
-            await getUserName()
-            await getPassword()
-            refreshInstruments()
-            await fetchFavorites();
-        }
-    })
+    if (mostrarCambioNombre.value) mostrarCambioPass.value = false
+}
 
-    const favoritos = ref([])
-    const mostrarCambioPass = ref(false)
-    const nuevaPass = ref('')
-    const mostrarCambioNombre = ref(false)
-    const nuevoNombre = ref('')
-    const favoritosTabla = ref([])
+const cambiarPass = async () => {
+    if (nuevaPass.value.trim()) {
+        await updatePassword(nuevaPass.value.trim())
+        nuevaPass.value = ''
+        mostrarCambioPass.value = false
+    }
+}
 
-    const mostrarInputCambio = () => {
-        mostrarCambioPass.value = !mostrarCambioPass.value
+const cambiarNombre = async () => {
+    if (nuevoNombre.value.trim()) {
+        await updateUserName(nuevoNombre.value.trim())
+        nuevoNombre.value = ''
+        mostrarCambioNombre.value = false
+    }
+}
 
-        if (mostrarCambioPass.value) mostrarCambioNombre.value = false;
+const removeFavorite = async (instrumentId) => {
+    const { error } = await client
+        .from('favorites')
+        .delete()
+        .eq('users_id', user.value.id)
+        .eq('instrumentos_id', instrumentId)
+
+    if (error) {
+        console.log(error)
+        return
     }
 
-    const mostrarInputNombre = () => {
-        mostrarCambioNombre.value = !mostrarCambioNombre.value
+    await fetchFavorites()
+}
 
-        if (mostrarCambioNombre.value) mostrarCambioPass.value = false;
+const fetchFavorites = async () => {
+    const { data, error } = await client
+        .from('favorites')
+        .select(`intrumento: instrumentos_id (*)`)
+        .eq('users_id', user.value.id)
+    if (error) {
+        console.log(error)
+        return
     }
+    console.log(data)
 
-    const cambiarPass = async () => {
-        if (nuevaPass.value.trim()) {
-            await updatePassword(nuevaPass.value.trim())
-            nuevaPass.value = ''
-            mostrarCambioPass.value = false
+    favoritosTabla.value = data
+}
 
-        }
-    }
-
-    const cambiarNombre = async () => {
-        if (nuevoNombre.value.trim()) {
-            await updateUserName(nuevoNombre.value.trim())
-            nuevoNombre.value = ''
-            mostrarCambioNombre.value = false
-
-        }
-    }
-
-    const removeFavorite = async (instrumentId) => {
-        const { error } = await client
-            .from('favorites')
-            .delete()
-            .eq('users_id', user.value.id)
-            .eq('instrumentos_id', instrumentId);
-
-        if (error) {
-            console.log(error)
-            return
-        }
-
-        await fetchFavorites();
-    };
-
-
-    const fetchFavorites = async () => {
-        const { data, error } = await client
-            .from('favorites')
-            .select(`intrumento: instrumentos_id (*)`)
-            .eq('users_id', user.value.id);
-        if (error) {
-            console.log(error)
-            ret
-        }
-        console.log(data)
-
-        favoritosTabla.value = data
-
-
-    }
-
-    const cerrarSesion = async () => {
-        await logout()
-    }
-
-
-
-
-
-
-
+const cerrarSesion = async () => {
+    await logout()
+}
 </script>
 
 <template>
 
-    <!-- CONTENEDOR PRINCIPAL CON FLEX -->
-    <div class="flex space-x-4 mx-auto mt-10 p-6 shadow-lg rounded-xl bg-white">
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="p-8 bg-[#333333] min-h-screen">
 
-        <!-- PARTE DE ARRIBA (Centrada) -->
-        <div class="flex-1 flex flex-col items-center justify-center">
-            <h2 class="text-2xl font-bold mb-4 text-center">Perfil de {{ userName }}</h2>
+        <!-- CONTENEDOR DATOS -->
 
-            <div class="space-y-4 w-full">
-                <div>
-                    <div class="flex items-center justify-center space-x-2">
-                        <label class="text-gray-600 font-medium">Nombre:</label>
-                        <p class="text-md font-semibold text-gray-400">{{ userName }}</p>
+        <div
+            class="flex flex-col md:flex-row space-y-10 md:space-y-0 md:space-x-12 p-8 bg-[#1e1e1e] rounded-xl shadow-xl">
+
+            <!-- PARTE DE LA IZQUIERDA -->
+
+            <div class="flex-1 flex flex-col items-center md:items-start justify-start text-white">
+                <h2
+                    class="text-3xl font-bold mb-8 pb-3 text-center md:text-left border-b-4 border-yellow-500 inline-block">
+                    Perfil de <span class="text-yellow-400">{{ userName }}</span></h2>
+                <div class="space-y-6 w-full">
+                    <div>
+                        <div class="flex items-center justify-center md:justify-start space-x-3">
+                            <label class="font-semibold text-gray-300">Nombre:</label>
+                            <p class="text-lg font-medium text-white">{{ userName }}</p>
+                        </div>
+                        <div class="flex justify-center md:justify-start mt-3">
+                            <button @click="mostrarInputNombre"
+                                class="bg-yellow-500 cursor-pointer text-gray-900 font-semibold px-6 py-2 rounded-md hover:bg-yellow-400 transition duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50">
+                                Cambiar nombre
+                            </button>
+                        </div>
+                        <div v-if="mostrarCambioNombre"
+                            class="mt-5 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                            <input v-model="nuevoNombre" type="text"
+                                class="w-full max-w-xs p-3 border-2 border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition duration-200"
+                                placeholder="Nuevo nombre" />
+                            <button @click="cambiarNombre"
+                                class="bg-yellow-600  cursor-pointer text-gray-900 font-semibold px-6 py-2 rounded-md hover:bg-yellow-500 transition duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-600 focus:ring-opacity-50">
+                                Guardar
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex justify-center">
-                        <button @click="mostrarInputNombre"
-                            class="mt-2 bg-blue-400 px-4 py-2 rounded-md hover:bg-blue-600 cursor-pointer text-white">
-                            Cambiar nombre
+                    <div>
+                        <div class="flex items-center justify-center md:justify-start space-x-3">
+                            <label class="font-semibold text-gray-300">Correo electrónico:</label>
+                            <p class="text-lg font-medium text-white">{{ user?.email }}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-center md:justify-start space-x-3">
+                            <label class="font-semibold text-gray-300">Contraseña:</label>
+                            <p class="text-lg font-medium text-white">{{ userPass }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center md:justify-start mt-3">
+                        <button @click="mostrarInputCambio"
+                            class="bg-yellow-500  text-gray-900 cursor-pointer font-semibold px-6 py-2 rounded-md hover:bg-yellow-400 transition duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50">
+                            Cambiar contraseña
                         </button>
                     </div>
-                    <div v-if="mostrarCambioNombre" class="mt-3 flex justify-center">
-                        <input v-model="nuevoNombre" type="text" class="w-full max-w-xs p-2 border rounded-md"
-                            placeholder="Nuevo nombre" />
-                        <button @click="cambiarNombre"
-                            class="mt-2 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 cursor-pointer">
-                            Guardar nuevo nombre
+
+                    <div v-if="mostrarCambioPass"
+                        class="mt-5 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <input v-model="nuevaPass" type="password"
+                            class="w-full max-w-xs p-3 border-2 border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition duration-200"
+                            placeholder="Nueva contraseña" />
+                        <button @click="cambiarPass"
+                            class="bg-yellow-600  cursor-pointer text-gray-900 font-semibold px-6 py-2 rounded-md hover:bg-yellow-500 transition duration-200 focus:outline-none focus:ring-2 focus:ring-600 focus:ring-opacity-50">
+                            Guardar
                         </button>
                     </div>
                 </div>
-
-                <div class="flex justify-center">
-                    <label class="text-gray-600 font-medium">Correo electrónico: </label>
-                    <p class="text-md font-semibold text-gray-400 ml-1.5"> {{ user?.email }}</p>
-                </div>
-
-                <div class="flex items-center justify-center space-x-2">
-                    <label class="text-gray-600 font-medium">Contraseña actual:</label>
-                    <p class="text-md font-semibold text-gray-400">{{ userPass }}</p>
-                </div>
-
-                <div class="flex justify-center">
-                    <button @click="mostrarInputCambio"
-                        class="bg-blue-400 px-4 py-2 rounded-md hover:bg-blue-600 cursor-pointer text-white">
-                        Cambiar contraseña
+                <div class="flex justify-center md:justify-start mt-10 w-full">
+                    <button @click="cerrarSesion"
+                        class="bg-red-600 cursor-pointer text-white font-semibold px-8 py-3 rounded-md hover:bg-red-700 transition duration-200 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50">
+                        Cerrar sesión
                     </button>
                 </div>
+                <p v-if="errorMsg" class="text-red-500 mt-6 text-center w-full">{{ errorMsg }}</p>
+            </div>
+            <div class="hidden md:block border-r-2 border-gray-700"></div>
+            <div class="md:hidden border-t-2 border-gray-700 pt-8 mt-8"></div>
 
-                <div v-if="mostrarCambioPass" class="mt-3 flex justify-center">
-                    <input v-model="nuevaPass" type="password" class="w-full max-w-xs p-2 border rounded-md"
-                        placeholder="Nueva contraseña" />
-                    <button @click="cambiarPass"
-                        class="mt-2 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 cursor-pointer">
-                        Guardar nueva contraseña
-                    </button>
+            <!-- PARTE DE LA DERECHA -->
+             
+            <div class="flex-1 h-full flex flex-col items-center md:items-start text-white">
+                <h1
+                    class="font-bold text-2xl text-center md:text-left text-white border-b-4 border-yellow-500 inline-block mb-8 pb-3">
+                    INSTRUMENTOS FAVORITOS
+                </h1>
+                <div class="w-full max-h-[500px] overflow-y-auto pr-4">
+                    <ul v-if="favoritosTabla && favoritosTabla.length > 0" class="space-y-4 w-full">
+                        <li v-for="favorito in favoritosTabla" :key="favorito.intrumento?.id"
+                            class="bg-gray-800 p-4 rounded-xl shadow-md border border-gray-700 text-white flex justify-between items-center">
+                            <span class="flex-1 mr-4 text-lg">{{ favorito.intrumento?.name }} {{
+                                favorito.intrumento?.emoji }}</span>
+                            <Icon name="material-symbols:delete"
+                                class="text-red-500 hover:text-red-700 text-2xl cursor-pointer transition duration-200"
+                                @click="() => removeFavorite(favorito.intrumento?.id)" title="Quitar de favoritos" />
+                        </li>
+                    </ul>
+                    <p v-else class="text-center text-gray-400 mt-8">No tienes favoritos aún.</p>
                 </div>
             </div>
-
-            <div class="flex justify-center mt-4">
-                <button @click="cerrarSesion"
-                    class="bg-red-400 text-white px-4 py-2 rounded-md hover:bg-red-600 cursor-pointer">
-                    Cerrar sesión
-                </button>
-            </div>
-
-            <p v-if="errorMsg" class="text-red-500 mt-4 text-center">{{ errorMsg }}</p>
         </div>
-
-        <!-- SEPARADOR VERTICAL -->
-        <div class="border-r-2 mx-4"></div>
-
-        <!-- PARTE DE ABAJO -->
-        <div class="flex-1 h-full">
-            <h1 class="font-bold text-xl text-center">INSTRUMENTOS FAVORITOS</h1>
-            <ul v-if="favoritosTabla.length > 0"
-                class="flex-grow flex flex-col items-center overflow-y-auto capitalize">
-                <li v-for="favorito in favoritosTabla" :key="favorito.intrumento.id"
-                    class="shadow-sm bg-gray-100 p-2 mt-5 flex items-center justify-between w-full max-w-[400px]">
-                    <span>{{ favorito.intrumento.name }} {{ favorito.intrumento.emoji }}</span>
-                    <Icon name="material-symbols:delete" class="text-red-500 hover:text-red-700 text-xl cursor-pointer"
-                        @click="() => removeFavorite(favorito.intrumento.id)" />
-                </li>
-            </ul>
-            <p v-else class="text-center text-gray-500">No tienes favoritos aún.</p>
-
-        </div>
-
     </div>
-
 </template>
