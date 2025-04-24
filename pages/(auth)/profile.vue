@@ -1,5 +1,6 @@
 <script setup>
 const client = useSupabaseClient()
+const passwordActual = ref('')
 
 const {
     user,
@@ -46,13 +47,6 @@ const mostrarInputNombre = () => {
     if (mostrarCambioNombre.value) mostrarCambioPass.value = false
 }
 
-const cambiarPass = async () => {
-    if (nuevaPass.value.trim()) {
-        await updatePassword(nuevaPass.value.trim())
-        nuevaPass.value = ''
-        mostrarCambioPass.value = false
-    }
-}
 
 const cambiarNombre = async () => {
     if (nuevoNombre.value.trim()) {
@@ -60,6 +54,35 @@ const cambiarNombre = async () => {
         nuevoNombre.value = ''
         mostrarCambioNombre.value = false
     }
+}
+
+const cambiarPass = async () => {
+    if (!passwordActual.value.trim() || !nuevaPass.value.trim()) {
+        errorMsg.value = 'Debes ingresar ambas contraseñas.'
+        return
+    }
+
+    const { error: loginError } = await client.auth.signInWithPassword({
+        email: user.value.email,
+        password: passwordActual.value.trim(),
+    })
+
+    if (loginError) {
+        errorMsg.value = 'La contraseña actual es incorrecta.'
+        return
+    }
+
+    const { error } = await updatePassword(nuevaPass.value.trim())
+
+    if (error) {
+        errorMsg.value = 'Hubo un error al cambiar la contraseña.'
+        return
+    }
+
+    passwordActual.value = ''
+    nuevaPass.value = ''
+    mostrarCambioPass.value = false
+    
 }
 
 const removeFavorite = async (instrumentId) => {
@@ -94,6 +117,14 @@ const fetchFavorites = async () => {
 const cerrarSesion = async () => {
     await logout()
 }
+
+const mascaraContrasena = (contrasena) => {
+    if (!contrasena) return ''
+    const visible = contrasena.slice(-3)
+    const oculto = '*'.repeat(contrasena.length - 3)
+    return oculto + visible
+}
+
 </script>
 
 <template>
@@ -145,7 +176,7 @@ const cerrarSesion = async () => {
                     <div>
                         <div class="flex items-center justify-center md:justify-start space-x-3">
                             <label class="font-semibold text-gray-300">Contraseña:</label>
-                            <p class="text-lg font-medium text-white">{{ userPass }}</p>
+                            <p class="text-lg font-medium text-white">{{ mascaraContrasena(userPass) }}</p>
                         </div>
                     </div>
 
@@ -157,15 +188,22 @@ const cerrarSesion = async () => {
                     </div>
 
                     <div v-if="mostrarCambioPass"
-                        class="mt-5 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        class="mt-5 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 flex-wrap">
+
+                        <input v-model="passwordActual" type="password"
+                            class="w-full max-w-xs p-3 border-2 border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition duration-200"
+                            placeholder="Contraseña actual" />
+
                         <input v-model="nuevaPass" type="password"
                             class="w-full max-w-xs p-3 border-2 border-gray-600 rounded-md bg-gray-700 text-white focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition duration-200"
                             placeholder="Nueva contraseña" />
+
                         <button @click="cambiarPass"
-                            class="bg-yellow-600  cursor-pointer text-gray-900 font-semibold px-6 py-2 rounded-md hover:bg-yellow-500 transition duration-200 focus:outline-none focus:ring-2 focus:ring-600 focus:ring-opacity-50">
+                            class="bg-yellow-600 cursor-pointer text-gray-900 font-semibold px-6 py-2 rounded-md hover:bg-yellow-500 transition duration-200 focus:outline-none focus:ring-600 focus:ring-opacity-50">
                             Guardar
                         </button>
                     </div>
+
                 </div>
                 <div class="flex justify-center md:justify-start mt-10 w-full">
                     <button @click="cerrarSesion"
@@ -179,7 +217,7 @@ const cerrarSesion = async () => {
             <div class="md:hidden border-t-2 border-gray-700 pt-8 mt-8"></div>
 
             <!-- PARTE DE LA DERECHA -->
-             
+
             <div class="flex-1 h-full flex flex-col items-center md:items-start text-white">
                 <h1
                     class="font-bold text-2xl text-center md:text-left text-white border-b-4 border-yellow-500 inline-block mb-8 pb-3">
