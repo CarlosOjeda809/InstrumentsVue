@@ -5,7 +5,7 @@ const password = ref('');
 const router = useRouter();
 
 const iniciarSesion = async () => {
-  await login(email.value, password.value); 
+  await login(email.value, password.value);
 };
 </script>
 

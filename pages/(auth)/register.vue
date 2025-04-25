@@ -2,7 +2,6 @@
 const { signup, errorMsg } = useAuth()
 const router = useRouter()
 
-const users = ref([])
 const nombreUser = ref('')
 const correoUser = ref('')
 const contraseñaUser = ref('')

@@ -1,18 +1,14 @@
-
 export function useAuth() {
   const client = useSupabaseClient()
   const user = useSupabaseUser()
-  const email = ref('')
-  const password = ref('')
   const errorMsg = ref('')
   const userName = ref('')
-  const userPass = ref('') 
 
   const getUserName = async () => {
     if (user.value) {
       const { data, error } = await client
         .from('users')
-        .select('Nombre') 
+        .select('Nombre')
         .eq('id', user.value.id)
         .single()
 
@@ -24,54 +20,6 @@ export function useAuth() {
       }
     }
   }
-
-
-  const getPassword = async () => {
-    if (user.value) {
-      const { data, error } = await client
-        .from('users')
-        .select('Contraseña')
-        .eq('id', user.value.id)
-        .single()
-
-      if (error) {
-        console.error('Error al obtener la contraseña del usuario:', error)
-
-      } else {
-        userPass.value = data.Contraseña
-      }
-    }
-  }
-
-  const updatePassword = async (newPassword) => {
-    if (!user.value) return
-
-
-    const { error: updateDbError } = await client
-      .from('users')
-      .update({ Contraseña: newPassword })
-      .eq('id', user.value.id)
-
-    if (updateDbError) {
-      console.error(updateDbError)
-      return
-    }
-
-
-    const { error: authError } = await client.auth.updateUser({
-      password: newPassword
-    })
-
-    if (authError) {
-
-      console.error(authError)
-      return
-    }
-
-    userPass.value = newPassword;
-    errorMsg.value = 'Contraseña actualizada';
-  }
-
 
   const updateUserName = async (newUserName) => {
     if (!user.value) return;
@@ -121,9 +69,8 @@ export function useAuth() {
     } else {
 
       userName.value = '';
-      userPass.value = '';
       errorMsg.value = '';
-      
+
 
       navigateTo('/login');
     }
@@ -160,6 +107,7 @@ export function useAuth() {
       email,
       password,
 
+
     });
 
     if (authError) {
@@ -183,7 +131,6 @@ export function useAuth() {
       {
         id: userId,
         Nombre: nombre,
-        Contraseña: password,
         Correo: email,
       },
     ]);
@@ -205,16 +152,11 @@ export function useAuth() {
   return {
     user,
     userName,
-    userPass,
-    email,
-    password,
     errorMsg,
     getUserName,
-    getPassword,
     login,
     signup,
     logout,
-    updatePassword,
     updateUserName,
     restablecerContraseña
   }

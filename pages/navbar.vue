@@ -2,17 +2,9 @@
 
 const {
   user,
-  email,
   userName,
-  password,
-  errorMsg,
   getUserName,
-  signup,
-  logout
-
 } = useAuth()
-
-
 
 
 onMounted(async () => {
