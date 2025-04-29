@@ -82,9 +82,9 @@ export function CRUD() {
     }
 
     const deleteInstrument = async (id) => {
-        await client.from('instruments').delete().eq('id', id)
-        await refreshInstruments()
-    }
+        await client.from('instruments').delete().eq('id', id);
+        instruments.value = instruments.value.filter(instrument => instrument.id !== id);
+    };
 
     const rellenarInstrument = (instrument) => {
         instrumentName.value = instrument.name
