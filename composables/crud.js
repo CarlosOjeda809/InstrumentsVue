@@ -82,9 +82,35 @@ export function CRUD() {
     }
 
     const deleteInstrument = async (id) => {
-        await client.from('instruments').delete().eq('id', id);
-        instruments.value = instruments.value.filter(instrument => instrument.id !== id);
-    };
+        try {
+          
+          const { error: deleteFavoriteError } = await client
+            .from('favorites')
+            .delete()
+            .eq('instrumentos_id', id)
+            .eq('users_id', user.value.id); 
+      
+          if (deleteFavoriteError) {
+            console.error("Error al eliminar favorito asociado:", deleteFavoriteError);
+            return;
+          }
+      
+          const { error: deleteInstrumentError } = await client
+            .from('instruments')
+            .delete()
+            .eq('id', id);
+      
+          if (deleteInstrumentError) {
+            console.error("Error al eliminar instrumento:", deleteInstrumentError);
+            return;
+          }
+      
+          instruments.value = instruments.value.filter(instrument => instrument.id !== id);
+      
+        } catch (error) {
+          console.error("Error inesperado al eliminar instrumento:", error);
+        }
+      };
 
     const rellenarInstrument = (instrument) => {
         instrumentName.value = instrument.name
