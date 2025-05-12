@@ -3,10 +3,35 @@ const { login, errorMsg, restablecerContraseña } = useAuth();
 const email = ref('');
 const password = ref('');
 const router = useRouter();
+const client = useSupabaseClient();
+const config = useRuntimeConfig();
 
 const iniciarSesion = async () => {
   await login(email.value, password.value);
 };
+
+const loginConGoogle = async () => {
+   
+    try {
+        const { error } = await client.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: config.public.BASE_URL + '/callback'
+            }
+        });
+
+        if (error) {
+            console.error('Error al iniciar sesión con Google:', error);
+            errorMsg.value = error.message;
+            return false;
+        }
+
+        errorMsg.value = ''
+    } catch (e) {
+        errorMsg.value = 'Error inesperado. Inténtalo de nuevo.' + e
+    } 
+}
+
 </script>
 
 <template>
@@ -23,6 +48,10 @@ const iniciarSesion = async () => {
         <button type="submit"
           class="w-full bg-yellow-500 text-gray-900 font-bold p-3 rounded-md hover:bg-yellow-400 cursor-pointer transition duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50">
           Login
+        </button>
+        <button type="button" @click="loginConGoogle"
+          class="w-full bg-yellow-700 text-gray-900 font-bold p-3 rounded-md hover:bg-yellow-900 cursor-pointer transition duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50">
+          Ingresar con Google
         </button>
 
         <button type="button" @click="() => router.push('/register')"

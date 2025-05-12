@@ -30,9 +30,9 @@ onMounted(async () => {
 
         <div @click="navigateTo('/')" class="flex items-center space-x-3 cursor-pointer group">
           <div class="text-white text-xl font-bold group-hover:text-yellow-400 transition duration-200">
-            Innoarea Projects
+            Carlos Ojeda
           </div>
-          <Icon name="material-symbols:eyeglasses"
+          <Icon name="material-symbols:music-note"
             class="text-4xl text-white group-hover:text-yellow-400 transition duration-200"></Icon>
         </div>
 
