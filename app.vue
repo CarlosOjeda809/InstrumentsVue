@@ -10,11 +10,9 @@ router.beforeEach(async (to, from) => {
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen">
+  <div class="flex-col h-screen">
     <Navbar />
-    <main class="flex-grow">
-      <NuxtPage />
-    </main>
-    <Footer></Footer>
+    <NuxtPage class="h-full flex-1"/>
+    <Footer />
   </div>
 </template>

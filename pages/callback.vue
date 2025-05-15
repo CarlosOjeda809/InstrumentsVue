@@ -1,9 +1,9 @@
 <script setup>
 const session = useSupabaseSession();
-onMounted(async() => {
+onMounted(async () => {
     console.log(session.value)
 
-    if (session?.value?.user){
+    if (session?.value?.user) {
         navigateTo('/')
     }
 
@@ -13,13 +13,11 @@ onMounted(async() => {
 })
 </script>
 
-    <template>
+<template>
     <div class="flex items-center justify-center">
         <h1 class="text-5xl text-black font-extrabold text-center">CALLBACK</h1>
     </div>
-    </template>
+</template>
 
 
-<style scoped>
-    
-</style>
+<style scoped></style>

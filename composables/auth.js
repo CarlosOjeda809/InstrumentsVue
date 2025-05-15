@@ -3,6 +3,7 @@ export function useAuth() {
   const user = useSupabaseUser()
   const errorMsg = ref('')
   const userName = ref('')
+  const config = useRuntimeConfig()
 
   const getUserName = async () => {
     if (user.value) {
@@ -147,6 +148,28 @@ export function useAuth() {
     errorMsg.value = '¡Registro exitoso! Revisa tu correo para verificar tu cuenta.';
     return true;
   };
+  
+  const loginConGoogle = async () => {
+
+  try {
+    const { error } = await client.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: config.public.BASE_URL + '/callback'
+      }
+    });
+
+    if (error) {
+      console.error('Error al iniciar sesión con Google:', error);
+      errorMsg.value = error.message;
+      return false;
+    }
+
+    errorMsg.value = ''
+  } catch (e) {
+    errorMsg.value = 'Error inesperado. Inténtalo de nuevo.' + e
+  }
+}
 
 
   return {
@@ -158,6 +181,7 @@ export function useAuth() {
     signup,
     logout,
     updateUserName,
-    restablecerContraseña
+    restablecerContraseña,
+    loginConGoogle
   }
 }
